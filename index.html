@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Recipe Management App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-amber-100 p-4 font-sans">
+    <div class="max-w-md mx-auto">
+      <h1 class="text-3xl font-bold mb-4 text-amber-800">
+        Recipe Management App
+      </h1>
+
+      <!-- Recipe Form -->
+      <form id="recipeForm" class="bg-white p-6 rounded-lg shadow-md mb-6">
+        <div class="mb-4">
+          <label for="recipeName" class="block text-amber-700 font-bold mb-2"
+            >Recipe Name</label
+          >
+          <input
+            type="text"
+            id="recipeName"
+            class="w-full px-3 py-2 border rounded-md"
+            required
+          />
+        </div>
+        <div class="mb-4">
+          <label for="ingredients" class="block text-amber-700 font-bold mb-2"
+            >Ingredients (one per line)</label
+          >
+          <textarea
+            id="ingredients"
+            class="w-full px-3 py-2 border rounded-md"
+            rows="4"
+            required
+          ></textarea>
+        </div>
+        <div class="mb-4">
+          <label for="instructions" class="block text-amber-700 font-bold mb-2"
+            >Cooking Instructions (one per line)</label
+          >
+          <textarea
+            id="instructions"
+            class="w-full px-3 py-2 border rounded-md"
+            rows="4"
+            required
+          ></textarea>
+        </div>
+        <div class="mb-4">
+          <label for="recipeImage" class="block text-amber-700 font-bold mb-2"
+            >Recipe Image</label
+          >
+          <input type="file" id="recipeImage" accept="image/*" class="w-full" />
+        </div>
+        <button
+          type="submit"
+          class="bg-amber-500 text-white px-4 py-2 rounded-md hover:bg-amber-600"
+        >
+          Save Recipe
+        </button>
+      </form>
+
+      <!-- Recipe Cards Container -->
+      <div id="recipeCards" class="grid gap-4"></div>
+    </div>
+
+    <script>
+      let recipes = [];
+      let editingIndex = -1;
+
+      document
+        .getElementById("recipeForm")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
+          const name = document.getElementById("recipeName").value;
+          const ingredients = document
+            .getElementById("ingredients")
+            .value.split("\n");
+          const instructions = document
+            .getElementById("instructions")
+            .value.split("\n");
+          const imageFile = document.getElementById("recipeImage").files[0];
+
+          if (editingIndex === -1) {
+            // Add new recipe
+            addRecipe(name, ingredients, instructions, imageFile);
+          } else {
+            // Update existing recipe
+            updateRecipe(
+              editingIndex,
+              name,
+              ingredients,
+              instructions,
+              imageFile
+            );
+          }
+        });
+
+      function addRecipe(name, ingredients, instructions, imageFile) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const recipe = {
+            name,
+            ingredients,
+            instructions,
+            image: e.target.result,
+          };
+          recipes.push(recipe);
+          renderRecipes();
+          resetForm();
+        };
+        reader.readAsDataURL(imageFile);
+      }
+
+      function updateRecipe(index, name, ingredients, instructions, imageFile) {
+        if (imageFile) {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            recipes[index] = {
+              name,
+              ingredients,
+              instructions,
+              image: e.target.result,
+            };
+            renderRecipes();
+            resetForm();
+          };
+          reader.readAsDataURL(imageFile);
+        } else {
+          recipes[index] = {
+            ...recipes[index],
+            name,
+            ingredients,
+            instructions,
+          };
+          renderRecipes();
+          resetForm();
+        }
+      }
+
+      function renderRecipes() {
+        const container = document.getElementById("recipeCards");
+        container.innerHTML = "";
+        recipes.forEach((recipe, index) => {
+          const card = document.createElement("div");
+          card.className = "bg-white p-4 rounded-lg shadow-md";
+          card.innerHTML = `
+                    <h2 class="text-xl font-bold mb-2">${recipe.name}</h2>
+                    <img src="${recipe.image}" alt="${
+            recipe.name
+          }" class="w-full h-48 object-cover mb-2 rounded-md">
+                    <h3 class="font-bold mb-1">Ingredients:</h3>
+                    <ul class="list-disc pl-5 mb-2">
+                        ${recipe.ingredients
+                          .map((ing) => `<li>${ing}</li>`)
+                          .join("")}
+                    </ul>
+                    <h3 class="font-bold mb-1">Instructions:</h3>
+                    <ol class="list-decimal pl-5 mb-2">
+                        ${recipe.instructions
+                          .map((inst) => `<li>${inst}</li>`)
+                          .join("")}
+                    </ol>
+                    <button onclick="editRecipe(${index})" class="bg-blue-500 text-white px-2 py-1 rounded-md mr-2">Edit</button>
+                    <button onclick="deleteRecipe(${index})" class="bg-red-500 text-white px-2 py-1 rounded-md">Delete</button>
+                `;
+          container.appendChild(card);
+        });
+      }
+
+      function editRecipe(index) {
+        const recipe = recipes[index];
+        document.getElementById("recipeName").value = recipe.name;
+        document.getElementById("ingredients").value =
+          recipe.ingredients.join("\n");
+        document.getElementById("instructions").value =
+          recipe.instructions.join("\n");
+        editingIndex = index;
+      }
+
+      function deleteRecipe(index) {
+        recipes.splice(index, 1);
+        renderRecipes();
+      }
+
+      function resetForm() {
+        document.getElementById("recipeForm").reset();
+        editingIndex = -1;
+      }
+    </script>
+  </body>
+</html>
